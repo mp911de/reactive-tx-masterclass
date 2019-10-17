@@ -1,0 +1,7 @@
+= Reactive Transactions Masterclass
+
+This repository contains code examples to master reactive transactions using SQL database and Neo4j.
+
+== License
+
+Code in this repository is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
