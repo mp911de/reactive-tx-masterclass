@@ -34,7 +34,7 @@
 	</properties>
 
 	<modules>
-		<module>barebone</module>
+		<module>plain</module>
 	</modules>
 
 	<dependencyManagement>
