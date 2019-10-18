@@ -35,14 +35,11 @@ import de.flapdoodle.embed.process.distribution.GenericVersion;
 import de.flapdoodle.embed.process.io.Processors;
 import de.flapdoodle.embed.process.runtime.Network;
 
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.EnumSet;
 import java.util.List;
 
 import org.bson.Document;
 import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -55,9 +52,9 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 /**
- * Extension providing a JDBC {@link Connection}.
+ * Extension providing a {@link MongoClient} and a in-memory MongoDB Replica Set.
  */
-final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, AfterAllCallback, ParameterResolver {
+final class MongoDBExtension implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
 
 	private static final ExtensionContext.Namespace MONGO = ExtensionContext.Namespace.create("MONGO");
 
@@ -77,8 +74,7 @@ final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, Af
 				.build();
 
 		IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder().defaults(Command.MongoD)
-				.processOutput(new ProcessOutput(Processors.silent(), Processors.console(), Processors.silent()))
-				.build();
+				.processOutput(new ProcessOutput(Processors.silent(), Processors.console(), Processors.silent())).build();
 
 		MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
 		MongodExecutable executable = starter.prepare(config);
@@ -101,8 +97,9 @@ final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, Af
 
 		mongoClient.close();
 
-		mongoClient = MongoClients.create("mongodb://localhost:27017/?replicaSet=rs0&retryWrites=false");
-		store.put(MongoClient.class, mongoClient);
+		store.put(MongoClient.class, MongoClients.create("mongodb://localhost:27017/?replicaSet=rs0&retryWrites=false"));
+		store.put(com.mongodb.reactivestreams.client.MongoClient.class, com.mongodb.reactivestreams.client.MongoClients
+				.create("mongodb://localhost:27017/?replicaSet=rs0&retryWrites=false"));
 	}
 
 	private boolean isReplicaSetStarted(Document replSetGetStatus) {
@@ -122,28 +119,16 @@ final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, Af
 	}
 
 	@Override
-	public void afterEach(ExtensionContext context) throws Exception {
-
-		ExtensionContext.Store store = context.getStore(MONGO);
-		Statement statement = store.get(Statement.class, Statement.class);
-		if (statement != null) {
-			store.remove(Statement.class);
-			statement.close();
-		}
-
-		Connection connection = store.get(Connection.class, Connection.class);
-		if (connection != null) {
-			store.remove(Connection.class);
-			connection.close();
-		}
-	}
-
-	@Override
 	public void afterAll(ExtensionContext context) {
 
 		ExtensionContext.Store store = context.getStore(MONGO);
 		MongodProcess process = store.get(MongodProcess.class, MongodProcess.class);
 		MongoClient mongoClient = store.get(MongoClient.class, MongoClient.class);
+		com.mongodb.reactivestreams.client.MongoClient reactiveClient = store.get(com.mongodb.reactivestreams.client.MongoClient.class, com.mongodb.reactivestreams.client.MongoClient.class);
+
+		if(reactiveClient != null){
+			reactiveClient.close();
+		}
 
 		if (mongoClient != null) {
 
@@ -167,7 +152,7 @@ final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, Af
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
 			throws ParameterResolutionException {
-		return parameterContext.getParameter().getType().isAssignableFrom(MongoClient.class);
+		return parameterContext.getParameter().getType().isAssignableFrom(MongoClient.class) || parameterContext.getParameter().getType().isAssignableFrom(com.mongodb.reactivestreams.client.MongoClient.class);
 	}
 
 	@Override
@@ -178,6 +163,10 @@ final class MongoDBExtension implements BeforeAllCallback, AfterEachCallback, Af
 
 		if (parameterContext.getParameter().getType().isAssignableFrom(MongoClient.class)) {
 			return store.get(MongoClient.class);
+		}
+
+		if (parameterContext.getParameter().getType().isAssignableFrom(com.mongodb.reactivestreams.client.MongoClient.class)) {
+			return store.get(com.mongodb.reactivestreams.client.MongoClient.class);
 		}
 
 		throw new ParameterResolutionException("¯\\_(ツ)_/¯");
