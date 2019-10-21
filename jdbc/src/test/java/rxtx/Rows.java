@@ -19,12 +19,47 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.StringJoiner;
 
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+
 /**
  * Utility to print a result set to {@link System#out}
  */
 public final class Rows {
 
 	public static void print(ResultSet rs) throws SQLException {
+
+		int width = rs.getMetaData().getColumnCount() * 20;
+
+		System.out.println(String.format("%0" + width + "d", 0).replace("0", "="));
+
+		StringJoiner joiner = new StringJoiner("|");
+		for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+			joiner.add(String.format("%-20s", rs.getMetaData().getColumnLabel(i + 1)));
+		}
+
+		System.out.println("Columns: " + joiner);
+
+		boolean foundRow = false;
+
+		while (rs.next()) {
+
+			joiner = new StringJoiner("|");
+			for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+				joiner.add(String.format("%-20s", rs.getString(i + 1)));
+			}
+			foundRow = true;
+
+			System.out.println("         " + joiner);
+		}
+
+		if (!foundRow) {
+			System.out.println("No data");
+		}
+		System.out.println(String.format("%0" + width + "d", 0).replace("0", "="));
+		System.out.println();
+	}
+
+	public static void print(SqlRowSet rs) {
 
 		int width = rs.getMetaData().getColumnCount() * 20;
 
