@@ -35,6 +35,11 @@ final class R2dbcTransactionExcercise {
 	@BeforeEach
 	void setUp(Connection connection) {
 
+		Flux<Integer> dropPerson = executeUpdate(connection, "DROP TABLE IF EXISTS person");
+		Flux<Integer> dropPersonEvent = executeUpdate(connection, "DROP TABLE IF EXISTS person_event");
+
+		dropPerson.thenMany(dropPersonEvent).then().as(StepVerifier::create).verifyComplete();
+
 		Flux<Integer> createPerson = executeUpdate(connection,
 				"CREATE TABLE person " + "(id INT PRIMARY KEY, first_name VARCHAR(255), last_name VARCHAR(255))");
 		Flux<Integer> createPersonEvent = executeUpdate(connection, "CREATE TABLE person_event "

@@ -20,8 +20,6 @@ import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.spi.Connection;
 import reactor.test.StepVerifier;
 
-import java.util.UUID;
-
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -91,7 +89,7 @@ public class R2dbcConnectionExtension implements AfterEachCallback, ParameterRes
 		CloseableConnectionFactory connectionFactory = store.get(CloseableConnectionFactory.class,
 				CloseableConnectionFactory.class);
 		if (connectionFactory == null) {
-			connectionFactory = H2ConnectionFactory.inMemory(UUID.randomUUID().toString());
+			connectionFactory = H2ConnectionFactory.inMemory("R2dbcConnectionExtension");
 			store.put(CloseableConnectionFactory.class, connectionFactory);
 		}
 
