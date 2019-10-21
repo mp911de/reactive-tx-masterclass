@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import rxtx.RowPrinter;
-import rxtx.extension.R2dbcConnectionExtension;
+import rxtx.extension.R2dbcH2ConnectionExtension;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 /**
  * Tests explaining R2DBC transactions using Spring Framework and Spring Data R2DBC.
  */
-@ExtendWith(R2dbcConnectionExtension.class)
+@ExtendWith(R2dbcH2ConnectionExtension.class)
 @SpringBootTest(classes = SpringDataR2dbcTransactionExcercise.TestConfiguration.class)
 final class SpringDataR2dbcTransactionExcercise {
 

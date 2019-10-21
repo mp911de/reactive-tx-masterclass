@@ -20,7 +20,7 @@ import io.r2dbc.spi.Result;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import rxtx.RowPrinter;
-import rxtx.extension.R2dbcConnectionExtension;
+import rxtx.extension.R2dbcH2ConnectionExtension;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * Tests explaining R2DBC transactions using R2DBC API.
  */
-@ExtendWith(R2dbcConnectionExtension.class)
+@ExtendWith(R2dbcH2ConnectionExtension.class)
 final class R2dbcTransactionExcercise {
 
 	@BeforeEach

@@ -15,9 +15,10 @@
  */
 package rxtx.extension;
 
-import io.r2dbc.h2.CloseableConnectionFactory;
-import io.r2dbc.h2.H2ConnectionFactory;
+import io.r2dbc.spi.Closeable;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -26,10 +27,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-/**
- * Extension providing a R2DBC {@link Connection}.
- */
-public class R2dbcConnectionExtension implements AfterEachCallback, ParameterResolver {
+public abstract class AbstractR2dbcConnectionExtension implements AfterEachCallback, ParameterResolver {
 
 	private static final ExtensionContext.Namespace R2DBC = ExtensionContext.Namespace.create("R2DBC");
 
@@ -44,18 +42,21 @@ public class R2dbcConnectionExtension implements AfterEachCallback, ParameterRes
 			StepVerifier.create(connection.close()).verifyComplete();
 		}
 
-		CloseableConnectionFactory connectionFactory = store.get(CloseableConnectionFactory.class,
-				CloseableConnectionFactory.class);
+		ConnectionFactory connectionFactory = store.get(ConnectionFactory.class, ConnectionFactory.class);
 		if (connectionFactory != null) {
-			store.remove(CloseableConnectionFactory.class);
-			StepVerifier.create(connectionFactory.close()).verifyComplete();
+			store.remove(ConnectionFactory.class);
+
+			if (connectionFactory instanceof Closeable) {
+				StepVerifier.create(((Closeable) connectionFactory).close()).verifyComplete();
+			}
 		}
 	}
 
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
 			throws ParameterResolutionException {
-		return parameterContext.getParameter().getType().isAssignableFrom(Connection.class);
+		return parameterContext.getParameter().getType().isAssignableFrom(Connection.class)
+				|| parameterContext.getParameter().getType().isAssignableFrom(ConnectionFactory.class);
 	}
 
 	@Override
@@ -68,6 +69,10 @@ public class R2dbcConnectionExtension implements AfterEachCallback, ParameterRes
 			return getConnection(store);
 		}
 
+		if (parameterContext.getParameter().getType().isAssignableFrom(ConnectionFactory.class)) {
+			return getConnectionFactory(store);
+		}
+
 		throw new ParameterResolutionException("¯\\_(ツ)_/¯");
 	}
 
@@ -76,23 +81,13 @@ public class R2dbcConnectionExtension implements AfterEachCallback, ParameterRes
 		Connection connection = store.get(Connection.class, Connection.class);
 		if (connection == null) {
 
-			CloseableConnectionFactory connectionFactory = getConnectionFactory(store);
-			connection = connectionFactory.create().block();
+			ConnectionFactory connectionFactory = getConnectionFactory(store);
+			connection = Mono.from(connectionFactory.create()).block();
 			store.put(Connection.class, connection);
 		}
 
 		return connection;
 	}
 
-	private CloseableConnectionFactory getConnectionFactory(ExtensionContext.Store store) {
-
-		CloseableConnectionFactory connectionFactory = store.get(CloseableConnectionFactory.class,
-				CloseableConnectionFactory.class);
-		if (connectionFactory == null) {
-			connectionFactory = H2ConnectionFactory.inMemory("R2dbcConnectionExtension");
-			store.put(CloseableConnectionFactory.class, connectionFactory);
-		}
-
-		return connectionFactory;
-	}
+	abstract ConnectionFactory getConnectionFactory(ExtensionContext.Store store);
 }
