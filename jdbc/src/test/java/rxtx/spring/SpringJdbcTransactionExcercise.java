@@ -66,7 +66,8 @@ final class SpringJdbcTransactionExcercise {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired JdbcOperations operations, @Autowired TransactionOperations tx) {
+	void programmaticTransactionalWithRollback(@Autowired JdbcOperations operations,
+			@Autowired TransactionOperations tx) {
 
 		SqlRowSet resultSet = operations.queryForRowSet("SELECT * FROM person");
 		System.out.println("Rows in person");
@@ -78,7 +79,7 @@ final class SpringJdbcTransactionExcercise {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired JdbcOperations operations,
+	void atTransactionalWithRollback(@Autowired JdbcOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		SqlRowSet resultSet = operations.queryForRowSet("SELECT * FROM person");

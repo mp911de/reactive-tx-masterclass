@@ -90,7 +90,7 @@ final class ReactiveSpringDataMongoTransactionExcercise {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired ReactiveMongoOperations operations,
+	void programmaticTransactionalWithRollback(@Autowired ReactiveMongoOperations operations,
 			@Autowired TransactionalOperator rxtx) {
 
 		Mono<Document> insertPerson = Mono.empty();
@@ -107,7 +107,7 @@ final class ReactiveSpringDataMongoTransactionExcercise {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired ReactiveMongoOperations operations,
+	void atTransactionalWithRollback(@Autowired ReactiveMongoOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		System.out.println("Documents in person");

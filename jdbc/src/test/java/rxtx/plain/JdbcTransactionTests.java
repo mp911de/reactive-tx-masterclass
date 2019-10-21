@@ -80,7 +80,7 @@ final class JdbcTransactionTests {
 	}
 
 	@Test
-	void transactionalWithFailure(Connection connection, Statement statement) throws SQLException {
+	void transactionalWithRollback(Connection connection, Statement statement) throws SQLException {
 
 		// BEGIN
 		connection.setAutoCommit(false);

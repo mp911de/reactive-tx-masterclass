@@ -98,7 +98,7 @@ final class SpringDataMongoTransactionTests {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired MongoOperations operations,
+	void programmaticTransactionalWithRollback(@Autowired MongoOperations operations,
 			@Autowired TransactionOperations tx) {
 
 		tx.executeWithoutResult(status -> {
@@ -128,7 +128,7 @@ final class SpringDataMongoTransactionTests {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired MongoOperations operations,
+	void atTransactionalWithRollback(@Autowired MongoOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		transactionalService.insert();

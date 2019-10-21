@@ -78,7 +78,7 @@ final class SpringDataMongoTransactionExcercise {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired MongoOperations operations,
+	void programmaticTransactionalWithRollback(@Autowired MongoOperations operations,
 			@Autowired TransactionOperations tx) {
 
 		System.out.println("Documents in person");
@@ -89,7 +89,7 @@ final class SpringDataMongoTransactionExcercise {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired MongoOperations operations,
+	void atTransactionalWithRollback(@Autowired MongoOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		System.out.println("Documents in person");

@@ -84,7 +84,8 @@ final class SpringJdbcTransactionTests {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired JdbcOperations operations, @Autowired TransactionOperations tx) {
+	void programmaticTransactionalWithRollback(@Autowired JdbcOperations operations,
+			@Autowired TransactionOperations tx) {
 
 		tx.executeWithoutResult(status -> {
 			operations.execute("INSERT INTO person VALUES(1, 'Jesse', 'Pinkman')");
@@ -112,7 +113,7 @@ final class SpringJdbcTransactionTests {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired JdbcOperations operations,
+	void atTransactionalWithRollback(@Autowired JdbcOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		transactionalService.insert();

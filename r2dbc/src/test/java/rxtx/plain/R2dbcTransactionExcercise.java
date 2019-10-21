@@ -68,7 +68,7 @@ final class R2dbcTransactionExcercise {
 	}
 
 	@Test
-	void transactionalWithFailure(Connection connection) {
+	void transactionalWithRollback(Connection connection) {
 
 		Flux<Integer> insertPerson = Flux.empty();
 		Flux<Integer> insertPersonEvent = Flux.empty();

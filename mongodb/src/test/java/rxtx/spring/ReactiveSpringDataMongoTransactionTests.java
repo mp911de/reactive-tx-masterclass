@@ -103,7 +103,7 @@ final class ReactiveSpringDataMongoTransactionTests {
 	}
 
 	@Test
-	void programmaticTransactionalWithFailure(@Autowired ReactiveMongoOperations operations,
+	void programmaticTransactionalWithRollback(@Autowired ReactiveMongoOperations operations,
 			@Autowired TransactionalOperator rxtx) {
 
 		Mono<Document> insertPerson = operations
@@ -130,7 +130,7 @@ final class ReactiveSpringDataMongoTransactionTests {
 	}
 
 	@Test
-	void atTransactionalWithFailure(@Autowired ReactiveMongoOperations operations,
+	void atTransactionalWithRollback(@Autowired ReactiveMongoOperations operations,
 			@Autowired TransactionalService transactionalService) {
 
 		transactionalService.insert().as(StepVerifier::create).verifyComplete();

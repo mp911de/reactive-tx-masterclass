@@ -110,7 +110,7 @@ final class ReactiveMongoTransactionTests {
 	}
 
 	@Test
-	void transactionalWithFailure(MongoClient client) {
+	void transactionalWithRollback(MongoClient client) {
 
 		MongoDatabase database = client.getDatabase("database");
 		MongoCollection<Document> person = database.getCollection("person");

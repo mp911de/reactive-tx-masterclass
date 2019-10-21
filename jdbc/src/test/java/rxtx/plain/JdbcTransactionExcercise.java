@@ -63,7 +63,7 @@ final class JdbcTransactionExcercise {
 	}
 
 	@Test
-	void transactionalWithFailure(Connection connection, Statement statement) throws SQLException {
+	void transactionalWithRollback(Connection connection, Statement statement) throws SQLException {
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
 			System.out.println("Rows in person");

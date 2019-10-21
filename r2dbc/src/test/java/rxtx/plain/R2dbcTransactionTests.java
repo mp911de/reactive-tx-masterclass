@@ -78,7 +78,7 @@ final class R2dbcTransactionTests {
 	}
 
 	@Test
-	void transactionalWithFailure(Connection connection) {
+	void transactionalWithRollback(Connection connection) {
 
 		// Prepare
 		StepVerifier.create(connection.setAutoCommit(false)).verifyComplete();
