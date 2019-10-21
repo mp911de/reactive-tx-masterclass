@@ -52,7 +52,7 @@ final class JdbcTransactionExcercise {
 	void autoCommitWithFailure(Statement statement) throws SQLException {
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
-			System.out.println("Row in person");
+			System.out.println("Rows in person");
 			Rows.print(resultSet);
 		}
 
@@ -66,7 +66,7 @@ final class JdbcTransactionExcercise {
 	void transactionalWithFailure(Connection connection, Statement statement) throws SQLException {
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
-			System.out.println("Row in person");
+			System.out.println("Rows in person");
 			Rows.print(resultSet);
 		}
 

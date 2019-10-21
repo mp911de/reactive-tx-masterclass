@@ -36,6 +36,7 @@
 	<modules>
 		<module>jdbc</module>
 		<module>mongodb</module>
+		<module>r2dbc</module>
 	</modules>
 
 	<dependencyManagement>

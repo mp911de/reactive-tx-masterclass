@@ -69,7 +69,7 @@ final class JdbcTransactionTests {
 		}
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
-			System.out.println("Row in person");
+			System.out.println("Rows in person");
 			Rows.print(resultSet);
 		}
 
@@ -99,7 +99,7 @@ final class JdbcTransactionTests {
 		}
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
-			System.out.println("Row in person");
+			System.out.println("Rows in person");
 			Rows.print(resultSet);
 		}
 
