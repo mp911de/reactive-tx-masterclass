@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package rxtx;
+package rxtx.plain;
 
-import com.mongodb.MongoCommandException;
-import com.mongodb.reactivestreams.client.ClientSession;
-import com.mongodb.reactivestreams.client.Success;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -27,16 +24,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.mongodb.MongoWriteException;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import rxtx.Documents;
+import rxtx.extension.MongoDBExtension;
 
 /**
  * Tests explaining MongoDB transactions using MongoDB API.
  */
 @ExtendWith(MongoDBExtension.class)
-final class ReactiveMongoTransactionTests {
+final class ReactiveMongoTransactionExcercise {
 
 	@BeforeEach
 	void setUp(MongoClient client) {
@@ -59,17 +57,7 @@ final class ReactiveMongoTransactionTests {
 		MongoCollection<Document> person = database.getCollection("person");
 		MongoCollection<Document> personEvent = database.getCollection("personEvent");
 
-		StepVerifier.create(person.insertOne(new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
-
-		StepVerifier.create(personEvent.insertOne(new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman").append("ACTION", "CREATED"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
+		// insert
 	}
 
 	@Test
@@ -79,26 +67,7 @@ final class ReactiveMongoTransactionTests {
 		MongoCollection<Document> person = database.getCollection("person");
 		MongoCollection<Document> personEvent = database.getCollection("personEvent");
 
-		StepVerifier.create(person.insertOne(new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
-
-		StepVerifier.create(personEvent.insertOne(new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman").append("ACTION", "CREATED"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
-
-		StepVerifier.create(person.deleteOne(new Document("_id", 1))) //
-				.expectNextCount(1) //
-				.verifyComplete();
-
-		StepVerifier.create(personEvent.insertOne(new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman").append("ACTION", "CREATED"))) //
-				.verifyError(MongoWriteException.class);
+		// insert, delete
 
 		System.out.println("Documents in person");
 		Flux.from(person.find()).doOnNext(Documents::print).blockLast();
@@ -115,34 +84,7 @@ final class ReactiveMongoTransactionTests {
 		MongoCollection<Document> personEvent = database.getCollection("personEvent");
 
 		// BEGIN
-		ClientSession session = Mono.from(client.startSession()).block();
-		session.startTransaction();
-
-		StepVerifier.create(person.insertOne(session, new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
-
-		StepVerifier.create(personEvent.insertOne(session, new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman").append("ACTION", "CREATED"))) //
-				.expectNext(Success.SUCCESS)
-				.verifyComplete();
-
-		StepVerifier.create(session.commitTransaction()).verifyComplete();
-		session.startTransaction();
-
-		StepVerifier.create(person.deleteOne(session, new Document("_id", 1))) //
-				.expectNextCount(1) //
-				.verifyComplete();
-
-		StepVerifier.create(personEvent.insertOne(session, new Document("_id", 1) //
-				.append("firstName", "Jesse") //
-				.append("lastName", "Pinkman").append("ACTION", "DELETED"))) //
-				.verifyError(MongoCommandException.class);
-
-		StepVerifier.create(session.abortTransaction()).verifyComplete();
+		// insert, delete transactional
 
 		System.out.println("Documents in person");
 		Flux.from(person.find()).doOnNext(Documents::print).blockLast();

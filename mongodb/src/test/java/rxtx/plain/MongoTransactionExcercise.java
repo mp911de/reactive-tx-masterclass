@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package rxtx;
+package rxtx.plain;
 
 import java.util.function.Consumer;
 
@@ -25,6 +25,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import rxtx.Documents;
+import rxtx.extension.MongoDBExtension;
 
 /**
  * Tests explaining MongoDB transactions using MongoDB API.

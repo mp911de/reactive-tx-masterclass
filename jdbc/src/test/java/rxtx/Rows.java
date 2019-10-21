@@ -15,28 +15,44 @@
  */
 package rxtx;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.StringJoiner;
 
-import org.bson.Document;
-
 /**
- * Utility to print a {@link Documents} to {@link System#out}
+ * Utility to print a result set to {@link System#out}
  */
-final class Documents {
+public final class Rows {
 
-	public static void print(Document document) {
+	public static void print(ResultSet rs) throws SQLException {
 
-		int width = document.size() * 20;
+		int width = rs.getMetaData().getColumnCount() * 20;
 
 		System.out.println(String.format("%0" + width + "d", 0).replace("0", "="));
 
 		StringJoiner joiner = new StringJoiner("|");
-		document.forEach((s, o) -> {
-			joiner.add(String.format("%-20s", o));
-		});
+		for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+			joiner.add(String.format("%-20s", rs.getMetaData().getColumnLabel(i + 1)));
+		}
 
-		System.out.println("         " + joiner);
+		System.out.println("Columns: " + joiner);
 
+		boolean foundRow = false;
+
+		while (rs.next()) {
+
+			joiner = new StringJoiner("|");
+			for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+				joiner.add(String.format("%-20s", rs.getString(i + 1)));
+			}
+			foundRow = true;
+
+			System.out.println("         " + joiner);
+		}
+
+		if (!foundRow) {
+			System.out.println("No data");
+		}
 		System.out.println(String.format("%0" + width + "d", 0).replace("0", "="));
 		System.out.println();
 	}

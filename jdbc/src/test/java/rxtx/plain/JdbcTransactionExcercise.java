@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package rxtx;
-
-import static org.junit.jupiter.api.Assertions.*;
+package rxtx.plain;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import rxtx.Rows;
+import rxtx.extension.JdbcConnectionExtension;
 
 /**
  * Tests explaining JDBC transactions using JDBC API.
  */
 @ExtendWith(JdbcConnectionExtension.class)
-final class JdbcTransactionTests {
+final class JdbcTransactionExcercise {
 
 	@BeforeEach
 	void setUp(Connection connection) throws SQLException {
@@ -47,24 +46,10 @@ final class JdbcTransactionTests {
 	@Test
 	void autoCommit(Statement statement) throws SQLException {
 
-		statement.executeUpdate("INSERT INTO person VALUES(1, 'Jesse', 'Pinkman')");
-		statement.executeUpdate("INSERT INTO person_event VALUES(1, 'Jesse', 'Pinkman', 'CREATED')");
 	}
 
 	@Test
 	void autoCommitWithFailure(Statement statement) throws SQLException {
-
-		statement.executeUpdate("INSERT INTO person VALUES(1, 'Jesse', 'Pinkman')");
-		statement.executeUpdate("INSERT INTO person_event VALUES(1, 'Jesse', 'Pinkman', 'CREATED')");
-
-		statement.executeUpdate("DELETE FROM person WHERE id = 1");
-
-		try {
-			statement.executeUpdate("INSERT INTO person_event VALUES(1, 'Jesse', 'Pinkman', 'DELETED')");
-			fail("Missing JdbcSQLIntegrityConstraintViolationException");
-		} catch (JdbcSQLIntegrityConstraintViolationException e) {
-			// expected exception
-		}
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
 			System.out.println("Row in person");
@@ -79,22 +64,6 @@ final class JdbcTransactionTests {
 
 	@Test
 	void transactionalWithFailure(Connection connection, Statement statement) throws SQLException {
-
-		// BEGIN
-		connection.setAutoCommit(false);
-
-		statement.executeUpdate("INSERT INTO person VALUES(1, 'Jesse', 'Pinkman')");
-		statement.executeUpdate("INSERT INTO person_event VALUES(1, 'Jesse', 'Pinkman', 'CREATED')");
-
-		statement.executeUpdate("DELETE FROM person WHERE id = 1");
-
-		try {
-			statement.executeUpdate("INSERT INTO person_event VALUES(1, 'Jesse', 'Pinkman', 'DELETED')");
-			fail("Missing JdbcSQLIntegrityConstraintViolationException");
-		} catch (JdbcSQLIntegrityConstraintViolationException e) {
-			// expected exception
-			connection.rollback();
-		}
 
 		try (ResultSet resultSet = statement.executeQuery("SELECT * FROM person")) {
 			System.out.println("Row in person");

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package rxtx;
+package rxtx.extension;
 
 import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -54,7 +54,7 @@ import com.mongodb.client.MongoDatabase;
 /**
  * Extension providing a {@link MongoClient} and a in-memory MongoDB Replica Set.
  */
-final class MongoDBExtension implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
+public final class MongoDBExtension implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
 
 	private static final ExtensionContext.Namespace MONGO = ExtensionContext.Namespace.create("MONGO");
 

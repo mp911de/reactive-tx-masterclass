@@ -6,19 +6,24 @@
 
 	<parent>
 		<groupId>reactive-tx-masterclass</groupId>
-		<artifactId>plain</artifactId>
+		<artifactId>reactive-tx-masterclass</artifactId>
 		<version>1.0-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
-	<artifactId>plain-jdbc</artifactId>
+	<artifactId>jdbc</artifactId>
 	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>1.4.200</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
