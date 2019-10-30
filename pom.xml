@@ -36,6 +36,7 @@
 	<modules>
 		<module>jdbc</module>
 		<module>mongodb</module>
+		<module>neo4j</module>
 		<module>r2dbc</module>
 	</modules>
 
