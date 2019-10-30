@@ -10,6 +10,8 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnJre;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
@@ -23,6 +25,7 @@ import org.reactivestreams.Publisher;
 /**
  * A suite of tests explaining the different options Neo4j driver offers.
  */
+@DisabledOnJre({ JRE.JAVA_8, JRE.JAVA_9, JRE.JAVA_10 }) // Neo4j 4.0 embedded is JDK 11+
 class Neo4jTransactionTypesTests {
 
 	private static final String NAME = "Linda Hamilton";
