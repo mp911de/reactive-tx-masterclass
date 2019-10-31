@@ -99,15 +99,13 @@ class Neo4jTransactionTypesTests {
 		@Test
 		void implicit() {
 
-			Flux<Long> personCreation = Flux.using(driver::rxSession,
-				session -> Flux.from(session
-					// Same signature as imperative
+			Flux<Long> personCreation = Flux.using(
+				driver::rxSession,
+				session -> session
 					.run("CREATE (a:Person {name: $name}) RETURN id(a) as id", parameters("name", NAME))
-					// Returns "only" a reactive streams Publisher
-					.records()
-				).map(r -> r.get("id").asLong())
-				,
-				RxSession::close);
+					.records(),
+				RxSession::close
+			).map(r -> r.get("id").asLong());
 
 			StepVerifier.create(personCreation)
 				.expectNextCount(1)
@@ -137,12 +135,12 @@ class Neo4jTransactionTypesTests {
 			Function<RxSession, Flux<Long>> actualWork = session ->
 				Flux.usingWhen(session.beginTransaction(),
 					// Yes, this looks pretty much like the `txFunction` in the example before
-					tx -> Flux.from(
-						tx.run("CREATE (a:Person {name: $name}) RETURN id(a) as id", parameters("name", NAME)).records()
-					).map(r -> r.get("id").asLong()),
+					tx -> tx.run("CREATE (a:Person {name: $name}) RETURN id(a) as id", parameters("name", NAME))
+						.records(),
 					RxTransaction::commit, // Success case
 					(tx, e) -> tx.rollback(), // Error / exceptional case
-					RxTransaction::commit); // Cancelation
+					RxTransaction::commit  // Cancelation
+				).map(r -> r.get("id").asLong());
 
 			Flux<Long> personCreation = Flux.using(driver::rxSession, actualWork, RxSession::close);
 

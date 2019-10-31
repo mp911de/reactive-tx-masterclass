@@ -4,6 +4,8 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import rxtx.extension.Neo4jDriverExtension;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.neo4j.driver.Driver;
 import org.neo4j.driver.exceptions.ClientException;
 import org.neo4j.driver.reactive.RxSession;
 import org.neo4j.driver.reactive.RxStatementRunner;
+import org.neo4j.driver.reactive.RxTransaction;
 import org.neo4j.driver.summary.ResultSummary;
 import org.neo4j.driver.summary.SummaryCounters;
 
@@ -97,6 +100,67 @@ public class Neo4jTransactionTests {
 			.verifyComplete();
 
 		StepVerifier.create(session.close()).verifyComplete();
+	}
+
+	@Test
+	void transactionalWithRollbackBetterVariant(Driver driver) {
+
+		RxSession session = driver.rxSession();
+
+		Flux.usingWhen(session.beginTransaction(),
+			tx -> {
+				Flux<SummaryCounters> createPerson = executeUpdate(tx, "CREATE (:Person {name: 'Aaron Paul'})");
+				Flux<SummaryCounters> createMovie = executeUpdate(tx,
+					"MATCH (p:Person) WHERE p.name = 'Aaron Paul' WITH p CREATE (p) - [:ACTED_IN {roles: 'Jesse Pinkman'}] -> (:Movie {title: 'El Camino'})");
+
+				return createPerson.concatWith(createMovie)
+					.collect(AtomicInteger::new,
+						(hlp, counters) -> hlp.accumulateAndGet(counters.nodesCreated(), (a, b) -> a + b))
+					.map(AtomicInteger::get)
+					.doOnNext(totalNumberOfNodesCreated -> {
+						if (totalNumberOfNodesCreated == 2) {
+							throw new RuntimeException("Throwing a business error");
+						}
+					});
+			},
+			RxTransaction::commit,
+			(tx, exception) -> tx.rollback(),
+			RxTransaction::commit
+		).as(StepVerifier::create).verifyErrorMessage("Throwing a business error");
+
+		Flux.from(session.run("MATCH (p:Person) RETURN p.name AS name").records())
+			.map(r -> r.get("name").asString())
+			.as(StepVerifier::create)
+			.verifyComplete();
+
+		StepVerifier.create(session.close()).verifyComplete();
+	}
+
+	@Test
+	void cancellationEffectsDangerousWithAutoCommit(Driver driver) throws InterruptedException {
+
+		Flux<Integer> createNodes = Flux.using(
+			driver::rxSession,
+			session -> session.run("UNWIND range (1,1000) AS i CREATE (s:SomeNode {position: i}) return s").records(),
+			RxSession::close
+		).map(r -> r.get("s").get("position").asInt());
+
+		createNodes
+			.as(StepVerifier::create)
+			.expectNext(1, 2, 3, 4, 5)
+			.thenCancel()
+			.verify();
+
+		// Give the completation signal some time.
+		Thread.sleep(2_000L);
+
+		Flux.using(
+			driver::rxSession,
+			session -> session.run("MATCH (s:SomeNode) RETURN count(s) as cnt").records(),
+			RxSession::close
+		)
+			.map(r -> r.get("cnt").asLong())
+			.single().as(StepVerifier::create).expectNext(1000L).verifyComplete();
 	}
 
 	private static Flux<SummaryCounters> executeUpdate(RxStatementRunner runner, String cypher) {
