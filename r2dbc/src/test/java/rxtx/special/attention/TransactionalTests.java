@@ -17,6 +17,8 @@ package rxtx.special.attention;
 
 import static org.springframework.data.r2dbc.query.Criteria.*;
 
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
@@ -90,9 +92,11 @@ final class TransactionalTests {
 		client.execute("SELECT COUNT(*) FROM starbucks").fetch().all().doOnNext(System.out::println).then().block();
 	}
 
-	// Note: Enable pooling, run in tx
+	// Note: Switch to R2dbcPostgresConnectionExtension, Enable pooling, run in tx
 	@Test
 	void nPlusOne(ConnectionFactory connectionFactory) {
+
+		ConnectionPool pool = new ConnectionPool(ConnectionPoolConfiguration.builder(connectionFactory).build());
 
 		R2dbcTransactionManager transactionManager = new R2dbcTransactionManager(connectionFactory);
 		DatabaseClient client = DatabaseClient.create(connectionFactory);
