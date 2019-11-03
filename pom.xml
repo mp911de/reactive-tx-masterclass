@@ -38,6 +38,8 @@
 		<module>mongodb</module>
 		<module>neo4j</module>
 		<module>r2dbc</module>
+		<module>web/servlet</module>
+		<module>web/webflux</module>
 	</modules>
 
 	<dependencyManagement>
