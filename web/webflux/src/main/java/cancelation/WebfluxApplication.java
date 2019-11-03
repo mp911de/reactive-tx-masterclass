@@ -21,9 +21,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -80,16 +77,12 @@ public class WebfluxApplication {
 
 		@PostMapping
 		Flux<Integer> longRunningSave() {
-			return Flux.interval(Duration.ZERO, Duration.ofSeconds(10)) //
+
+			Flux<Integer> counter = Flux.interval(Duration.ZERO, Duration.ofSeconds(10)) //
 					.take(6) //
-					.map(Long::intValue) //
-					.concatMap(i -> {
-						System.out.println("Round " + i);
-						List<Integer> items = IntStream.range(10 * i, (10 * i) + 10).boxed().collect(Collectors.toList());
-						return transactionalService.save(items).thenReturn(i);
-					}).doOnCancel(() -> {
-						System.out.println("Cancelled");
-					});
+					.map(Long::intValue);
+
+			return transactionalService.save(counter).doOnCancel(() -> System.out.println("Cancelled!"));
 		}
 
 		@GetMapping
@@ -108,8 +101,15 @@ public class WebfluxApplication {
 		}
 
 		@Transactional
-		public Mono<Void> save(List<Integer> items) {
-			return Flux.fromIterable(items).flatMap(item -> eventRepository.save(new Event(item))).then();
+		public Flux<Integer> save(Flux<Integer> counter) {
+
+			return counter.flatMap(i -> {
+
+				int from = 10 * i;
+				System.out.printf("Round %d, from %d to %d%n", i, from, from + 10);
+
+				return Flux.range(from, 10).flatMap(item -> eventRepository.save(new Event(item))).then(Mono.just(i));
+			});
 		}
 
 		public Flux<Event> findAll() {
