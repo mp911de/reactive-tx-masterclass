@@ -16,11 +16,13 @@
 package rxtx.extension;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -54,7 +56,8 @@ public class JdbcConnectionExtension implements AfterEachCallback, ParameterReso
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
 			throws ParameterResolutionException {
-		return parameterContext.getParameter().getType().isAssignableFrom(Connection.class)
+		return parameterContext.getParameter().getType().isAssignableFrom(DataSource.class)
+				|| parameterContext.getParameter().getType().isAssignableFrom(Connection.class)
 				|| parameterContext.getParameter().getType().isAssignableFrom(Statement.class);
 	}
 
@@ -63,6 +66,10 @@ public class JdbcConnectionExtension implements AfterEachCallback, ParameterReso
 			throws ParameterResolutionException {
 
 		ExtensionContext.Store store = extensionContext.getStore(JDBC);
+
+		if (parameterContext.getParameter().getType().isAssignableFrom(DataSource.class)) {
+			return getDataSource(store);
+		}
 
 		if (parameterContext.getParameter().getType().isAssignableFrom(Connection.class)) {
 			return getConnection(store);
@@ -75,14 +82,29 @@ public class JdbcConnectionExtension implements AfterEachCallback, ParameterReso
 		throw new ParameterResolutionException("¯\\_(ツ)_/¯");
 	}
 
+	private JdbcDataSource getDataSource(ExtensionContext.Store store) {
+
+		JdbcDataSource dataSource = store.get(JdbcDataSource.class, JdbcDataSource.class);
+		if (dataSource == null) {
+
+			dataSource = new JdbcDataSource();
+			dataSource.setUser("sa");
+			dataSource.setPassword("sa");
+			dataSource.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=true");
+
+			store.put(JdbcDataSource.class, dataSource);
+		}
+
+		return dataSource;
+	}
+
 	private Connection getConnection(ExtensionContext.Store store) {
 
 		Connection connection = store.get(Connection.class, Connection.class);
 		if (connection == null) {
 
 			try {
-				connection = DriverManager
-						.getConnection("jdbc:h2:mem:" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=true", "sa", "sa");
+				connection = getDataSource(store).getConnection();
 			} catch (SQLException e) {
 				throw new ParameterResolutionException("Cannot create connection", e);
 			}
