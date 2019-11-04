@@ -56,9 +56,11 @@ public class ServletApplication {
 
 			for (int i = 0; i < 6; i++) {
 
-				System.out.println("Round " + i);
+				int from = 10 * i;
+				int to = from + 10;
+				System.out.printf("Round %d, from %d to %d%n", i, from, to);
 
-				List<Integer> items = IntStream.range(10 * i, (10 * i) + 10).boxed().collect(Collectors.toList());
+				List<Integer> items = IntStream.range(from, to).boxed().collect(Collectors.toList());
 				transactionalService.save(items);
 
 				try {

@@ -46,7 +46,7 @@ public class WebfluxApplication {
 		SpringApplication.run(WebfluxApplication.class, args);
 	}
 
-	@Bean
+	// @Bean
 	NettyServerCustomizer customizer() {
 		return httpServer -> {
 			return httpServer.tcpConfiguration(tcpServer -> {
@@ -82,7 +82,7 @@ public class WebfluxApplication {
 					.take(6) //
 					.map(Long::intValue);
 
-			return transactionalService.save(counter).doOnCancel(() -> System.out.println("Cancelled!"));
+			return transactionalService.save(counter).doOnCancel(() -> System.out.println("Canceled!"));
 		}
 
 		@GetMapping
