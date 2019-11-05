@@ -17,8 +17,10 @@ import org.neo4j.driver.exceptions.ClientException;
 import org.neo4j.driver.reactive.RxSession;
 import org.neo4j.driver.reactive.RxStatementRunner;
 import org.neo4j.driver.reactive.RxTransaction;
+import org.neo4j.driver.reactive.RxTransactionWork;
 import org.neo4j.driver.summary.ResultSummary;
 import org.neo4j.driver.summary.SummaryCounters;
+import org.reactivestreams.Publisher;
 
 @ExtendWith(Neo4jDriverExtension.class)
 @DisabledOnJre({ JRE.JAVA_8, JRE.JAVA_9, JRE.JAVA_10 }) // Neo4j 4.0 embedded is JDK 11+
@@ -137,6 +139,40 @@ public class Neo4jTransactionTests {
 	}
 
 	@Test
+	void transactionalWithRollbackBetterVariant2(Driver driver) {
+
+		RxTransactionWork<Publisher<Integer>> txFunction = tx -> {
+			Flux<SummaryCounters> createPerson = executeUpdate(tx, "CREATE (:Person {name: 'Aaron Paul'})");
+			Flux<SummaryCounters> createMovie = executeUpdate(tx,
+				"MATCH (p:Person) WHERE p.name = 'Aaron Paul' WITH p CREATE (p) - [:ACTED_IN {roles: 'Jesse Pinkman'}] -> (:Movie {title: 'El Camino'})");
+
+			return createPerson.concatWith(createMovie)
+				.collect(AtomicInteger::new,
+					(hlp, counters) -> hlp.accumulateAndGet(counters.nodesCreated(), (a, b) -> a + b))
+				.map(AtomicInteger::get)
+				.doOnNext(totalNumberOfNodesCreated -> {
+					if (totalNumberOfNodesCreated == 2) {
+						throw new RuntimeException("Throwing a business error");
+					}
+				});
+		};
+
+		Flux.using(driver::rxSession,
+			session -> session.writeTransaction(txFunction)
+			, RxSession::close)
+			.as(StepVerifier::create).verifyErrorMessage("Throwing a business error");
+
+		RxSession session = driver.rxSession();
+
+		Flux.from(session.run("MATCH (p:Person) RETURN p.name AS name").records())
+			.map(r -> r.get("name").asString())
+			.as(StepVerifier::create)
+			.verifyComplete();
+
+		StepVerifier.create(session.close()).verifyComplete();
+	}
+
+	@Test
 	void cancellationEffectsDangerousWithAutoCommit(Driver driver) throws InterruptedException {
 
 		Flux<Integer> createNodes = Flux.using(
@@ -163,7 +199,7 @@ public class Neo4jTransactionTests {
 			.single().as(StepVerifier::create).expectNext(1000L).verifyComplete();
 	}
 
-	private static Flux<SummaryCounters> executeUpdate(RxStatementRunner runner, String cypher) {
+	static Flux<SummaryCounters> executeUpdate(RxStatementRunner runner, String cypher) {
 
 		return Flux.defer(() -> runner.run(cypher).summary()).map(ResultSummary::counters);
 	}
