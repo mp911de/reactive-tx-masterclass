@@ -1,7 +1,11 @@
 package rxtx.special.attention;
 
+import static org.neo4j.driver.Values.*;
+
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +16,7 @@ import org.neo4j.driver.Config;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Logging;
+import org.neo4j.driver.Values;
 import org.neo4j.driver.reactive.RxSession;
 import org.neo4j.harness.internal.TestNeo4jBuilders;
 import org.neo4j.harness.junit.extension.Neo4j;
@@ -46,10 +51,22 @@ public class TransactionalTests {
 			.bind(expectNumberOfNodes).to("upper")
 			.fetchAs(Long.class)
 			.all()
-			.limitRate(1)
 			.flatMap(it -> client.query("CREATE (n:Node {pos: $i}) RETURN n").bind(it).to("i").fetch().all())
 			//	.as(rxtx::transactional)
 			.as(StepVerifier::create).expectNextCount(expectNumberOfNodes).verifyComplete();
+	}
+
+	@Test
+	void nPlusOne2(@Autowired Driver driver) {
+
+		long expectNumberOfNodes = 1000L;
+		Flux<Long> outer = Flux.using(driver::rxSession,  session ->
+			Flux.from(session.run("UNWIND range (1,$upper) AS i RETURN i", parameters("upper", expectNumberOfNodes)).records()).map(r -> r.get("i").asLong()), RxSession::close);
+		Function<Long, Flux<Long>> inner = i ->
+			Flux.using(driver::rxSession, session ->
+				Flux.from(session.run("CREATE (n:Node {pos: $i}) RETURN n", parameters("i", i)).records()).map(r -> r.get("n").asNode().id()), RxSession::close);
+
+		outer.flatMap(inner).as(StepVerifier::create).expectNextCount(expectNumberOfNodes).verifyComplete();
 	}
 
 	@Configuration
@@ -70,7 +87,7 @@ public class TransactionalTests {
 		public Driver driver() {
 
 			Config config = Config.builder().withLogging(Logging.slf4j())
-				//		.withMaxConnectionPoolSize(1)
+			//	.withMaxConnectionPoolSize(1)
 				.build();
 			return GraphDatabase.driver(neo4j().boltURI(), config);
 		}
